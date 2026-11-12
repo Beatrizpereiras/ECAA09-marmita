@@ -1,0 +1,8 @@
+{
+  "name": "ecaa09-marmita",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Chatbot de vendas de marmitas com agente LLM, 100% client-side",
+  "scripts": { "test": "node testes.js" }
+}
