@@ -208,7 +208,7 @@ export class Pedido extends EventTarget {
     return {
       ok: true,
       pedido: this.resumo(),
-      instrucao: "Pedido pronto. O cliente precisa conferir a comanda e clicar no botão Confirmar pedido. Você não consegue confirmar por ele.",
+      instrucao: "Pedido pronto. O cliente precisa conferir o pedido e clicar no botão verde Confirmar pedido, que apareceu logo acima da caixa de mensagem. Você não consegue confirmar por ele.",
     };
   }
 

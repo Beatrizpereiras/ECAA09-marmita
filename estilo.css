@@ -268,6 +268,11 @@ h1, h2, h3 { font-family: var(--fonte-titulo); letter-spacing: -0.01em; margin: 
 }
 .atalhos button:hover { border-color: var(--brasa); color: var(--brasa); }
 
+.acao-chat { display: grid; margin: 0 0 .5rem; }
+.acao-chat:empty { display: none; }
+.acao-chat .btn { width: 100%; padding: .85rem 1rem; font-size: 1rem; }
+.acao-chat .btn-confirmar { box-shadow: 0 8px 20px -10px var(--oliva); animation: chamar 1.6s ease-in-out 3; }
+@keyframes chamar { 0%, 100% { transform: none; } 50% { transform: scale(1.03); } }
 .ver-comanda {
   display: flex; justify-content: space-between; align-items: center; width: 100%;
   margin: 0 0 .6rem; padding: .6rem .9rem; cursor: pointer;

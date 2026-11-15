@@ -129,6 +129,22 @@ function renderComanda() {
     b.addEventListener("click", novoPedido);
     acoes.append(c, b);
   }
+  renderAcaoChat();
+}
+
+// Botão grande dentro do chat, logo acima de "Ver comanda": o cliente confirma sem precisar abrir a comanda
+function renderAcaoChat() {
+  const area = $("acaoChat"); area.replaceChildren();
+  if (pedido.status === "aguardando_confirmacao") {
+    const b = document.createElement("button"); b.className = "btn btn-confirmar"; b.type = "button";
+    b.textContent = `Confirmar pedido de ${brl(pedido.total())}`;
+    b.addEventListener("click", confirmarPedido);
+    area.append(b);
+  } else if (pedido.status === "confirmado") {
+    const b = document.createElement("button"); b.className = "btn btn-linha"; b.type = "button"; b.textContent = "Fazer novo pedido";
+    b.addEventListener("click", novoPedido);
+    area.append(b);
+  }
 }
 
 function confirmarPedido() {
