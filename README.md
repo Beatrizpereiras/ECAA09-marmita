@@ -7,7 +7,9 @@ Trabalho da disciplina ECAA09 (UNIFEI). Chatbot web que vende marmitas conversan
 
 ## Como usar
 
-Abra a aplicação e converse com a atendente, por exemplo: *"duas marmitas de bife mal passado, uma sem cebola, e um suco de maracujá sem açúcar, entrega no BPS"*.
+O site funciona como a vitrine de uma marmitaria de verdade: foto de destaque com o especial do dia, cardápio da semana com fotos e preços (abas por dia), acompanhamentos, sucos e sobremesas, cartão fidelidade e um passo a passo de como pedir. Ao lado (no celular, no botão **Pedir com a Bia**) fica o chat com a **Bia**, chef e atendente virtual.
+
+Toque em **Quero esta** em qualquer prato ou converse com a Bia, por exemplo: *"duas marmitas de bife mal passado, uma sem cebola, e um suco de maracujá sem açúcar, entrega no BPS"*.
 
 A comanda ao lado (no celular, o botão **Ver comanda**) mostra itens, subtotal, taxa de entrega e total em tempo real. Quando a atendente fechar o pedido, confira e clique em **Confirmar pedido**.
 
@@ -52,7 +54,11 @@ guardrails.js  filtros de entrada e saída, canário, limite de taxa
 config.js      endereço do Worker (a chave NÃO fica no site)
 llm.js         chamada à IA pelo Worker, com nova tentativa automática no limite por minuto
 agente.js      prompt de sistema, ferramentas (function calling) e laço do agente
-app.js         liga tudo na tela
+app.js         liga a conversa e a comanda ao agente
+vitrine.js     site: cardápio com fotos, abas por dia, especial do dia, cartão fidelidade, abrir/fechar o chat
+fotos.js       código das fotos de cada prato (Unsplash)
+logo.svg       logo da Panela de Ferro
+bia.svg        avatar da Bia (ilustração própria)
 testes.js      testes automáticos (node testes.js)
 worker.js      cópia do código do Cloudflare Worker (só referência)
 ```
@@ -92,6 +98,10 @@ Cobrem cálculo de preços e entrega, disponibilidade por dia, validação de pe
 
 Em **Settings → Pages**, escolha **Deploy from a branch**, branch `main`, pasta `/ (root)` e salve. Em um ou dois minutos o site fica em `https://beatrizpereiras.github.io/ECAA09-marmita/`.
 
+## Cartão fidelidade
+
+Cada marmita confirmada carimba 1 selo; com 10 selos a próxima é por conta da casa. Como o site não tem servidor nem cadastro, os selos ficam salvos só no navegador do cliente (`localStorage`). O cartão é só visual: o agente continua sem poder dar desconto, então o resgate seria feito na entrega.
+
 ## Observações
 
-Restaurante, preços e taxas são fictícios.
+Restaurante, preços e taxas são fictícios. Fotos: [Unsplash](https://unsplash.com/license) (licença gratuita), carregadas direto de `images.unsplash.com`, que é o único endereço de imagem liberado na Content-Security-Policy além do próprio site.

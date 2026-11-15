@@ -3,51 +3,162 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Panela de Ferro | Marmitas em Itajubá</title>
-  <meta name="description" content="Peça marmitas conversando com a Nena, atendente virtual da Panela de Ferro.">
-  <!-- Guardrail extra: a página só carrega código próprio e só conversa com o Worker do Cloudflare (que fala com o Groq) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://marmita-api.pereirabeatrizsilva.workers.dev; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>Panela de Ferro | Marmitas caseiras em Itajubá</title>
+  <meta name="description" content="Marmitas caseiras feitas na hora em Itajubá. Veja o cardápio do dia e peça com a Bia, nossa chef virtual.">
+  <meta name="theme-color" content="#1E1A17">
+  <!-- Guardrail extra: a página só carrega código próprio, fotos do Unsplash e só conversa com o Worker do Cloudflare (que fala com o Groq) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://images.unsplash.com; connect-src https://marmita-api.pereirabeatrizsilva.workers.dev; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta name="referrer" content="no-referrer">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+  <link rel="preconnect" href="https://images.unsplash.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
   <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
-  <header class="topo">
-    <div class="marca">
-      <span class="alca" aria-hidden="true"></span>
-      <div>
-        <h1>Panela de Ferro</h1>
-        <p class="sub">Marmitas em Itajubá, entregues das 11h às 14h30</p>
+<div class="site">
+
+  <div class="coluna">
+    <header class="nav">
+      <a class="marca" href="#topo" aria-label="Panela de Ferro, início">
+        <img src="logo.svg" alt="" width="40" height="40">
+        <span>Panela de Ferro</span>
+      </a>
+      <nav class="links" aria-label="Seções">
+        <a href="#cardapio">Cardápio</a>
+        <a href="#extras">Bebidas e doces</a>
+        <a href="#fidelidade">Fidelidade</a>
+        <a href="#como">Como pedir</a>
+      </nav>
+      <p class="hoje" id="hoje"></p>
+    </header>
+
+    <main id="topo">
+      <!-- HERO -->
+      <section class="hero">
+        <img class="hero-foto" src="https://images.unsplash.com/photo-1626379907504-327b925f4b79?auto=format&fit=crop&w=1600&q=70" alt="Prato feito com arroz, feijão, carne, ovo e salada">
+        <div class="hero-conteudo">
+          <p class="sobretitulo">Marmitaria caseira em Itajubá</p>
+          <h1>Comida de casa,<br>feita na <em>panela de ferro</em>.</h1>
+          <p class="hero-texto">Arroz soltinho, feijão de verdade e tempero de vó. Escolha sua marmita, tire o que não gosta e receba quentinha em <span id="previsao"></span>.</p>
+          <div class="hero-acoes">
+            <a class="btn btn-quente" href="#cardapio">Ver o cardápio de hoje</a>
+            <button class="btn btn-vidro" type="button" data-abrir-chat>Pedir com a Bia</button>
+          </div>
+        </div>
+        <aside class="destaque" aria-label="Especial de hoje">
+          <p class="destaque-rotulo">Especial de hoje</p>
+          <p class="destaque-nome" id="destaqueNome"></p>
+          <p class="destaque-preco" id="destaquePreco"></p>
+          <button class="btn btn-quente btn-pedir" type="button" id="destaqueBtn">Quero esse</button>
+        </aside>
+      </section>
+
+      <ul class="garantias">
+        <li><strong>Entrega das <span id="horario"></span></strong><span>Centro, BPS, Pinheirinho e mais 8 bairros</span></li>
+        <li><strong>Frete grátis acima de <span id="freteGratis"></span></strong><span>Ou retire no balcão sem taxa</span></li>
+        <li><strong>Do seu jeito</strong><span>Sem cebola, ponto da carne, tempero, adicionais</span></li>
+      </ul>
+
+      <!-- CARDÁPIO -->
+      <section class="secao" id="cardapio" aria-labelledby="tCardapio">
+        <div class="secao-topo">
+          <div>
+            <p class="sobretitulo">Feito hoje cedo</p>
+            <h2 id="tCardapio">Marmitas da semana</h2>
+          </div>
+          <div class="abas" id="abasDias" role="tablist" aria-label="Dia da semana"></div>
+        </div>
+        <p class="nota" id="cardapioNota"></p>
+        <div class="grade" id="gradeMarmitas"></div>
+      </section>
+
+      <!-- EXTRAS -->
+      <section class="secao secao--creme" id="extras" aria-labelledby="tExtras">
+        <div class="secao-topo">
+          <div>
+            <p class="sobretitulo">Para completar</p>
+            <h2 id="tExtras">Acompanhamentos, sucos e sobremesas</h2>
+          </div>
+        </div>
+        <h3 class="subtitulo">Acompanhamentos</h3>
+        <div class="grade grade--mini" id="gradeAcomp"></div>
+        <h3 class="subtitulo">Bebidas</h3>
+        <div class="grade grade--mini" id="gradeBebidas"></div>
+        <h3 class="subtitulo">Sobremesas</h3>
+        <div class="grade grade--mini" id="gradeDoces"></div>
+      </section>
+
+      <!-- FIDELIDADE -->
+      <section class="secao" id="fidelidade" aria-labelledby="tFid">
+        <div class="fid">
+          <div class="fid-texto">
+            <p class="sobretitulo">Cliente de casa</p>
+            <h2 id="tFid">A cada 10 marmitas,<br>a próxima é nossa.</h2>
+            <p>Seu cartão fidelidade é carimbado sozinho a cada marmita confirmada. Sem cadastro, sem app: fica guardado neste navegador.</p>
+          </div>
+          <div class="cartao-fid" aria-label="Seu cartão fidelidade">
+            <div class="cartao-topo">
+              <img src="logo.svg" alt="" width="34" height="34">
+              <div><strong>Cartão Fidelidade</strong><span>Panela de Ferro</span></div>
+            </div>
+            <ol class="selos" id="selos"></ol>
+            <p class="selos-texto" id="selosTexto" aria-live="polite"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMO PEDIR -->
+      <section class="secao secao--escura" id="como" aria-labelledby="tComo">
+        <p class="sobretitulo">Pedido em 1 minuto</p>
+        <h2 id="tComo">Fale com a Bia como falaria com a gente no balcão</h2>
+        <ol class="passos">
+          <li><span>1</span><strong>Escolha</strong><p>Toque em “Quero esta” ou escreva do seu jeito: “2 de frango, uma sem feijão”.</p></li>
+          <li><span>2</span><strong>Personalize</strong><p>Ponto da carne, tempero, tirar ingredientes, adicionais. A comanda atualiza na hora.</p></li>
+          <li><span>3</span><strong>Confirme</strong><p>Informe bairro e pagamento, confira a comanda e clique em Confirmar pedido.</p></li>
+        </ol>
+        <button class="btn btn-quente" type="button" data-abrir-chat>Começar meu pedido</button>
+      </section>
+
+      <footer class="rodape">
+        <div class="marca"><img src="logo.svg" alt="" width="32" height="32"><span>Panela de Ferro</span></div>
+        <p>Itajubá – MG · Entregas das 11h às 14h30 · Restaurante, preços e taxas fictícios (trabalho da disciplina ECAA09, UNIFEI).</p>
+        <p>Fotos: <a href="https://unsplash.com/license" rel="noopener" target="_blank">Unsplash</a>. © <span id="anoRodape"></span> Panela de Ferro.</p>
+      </footer>
+    </main>
+  </div>
+
+  <!-- CHAT DA BIA -->
+  <aside class="chat" id="chat" aria-label="Conversa com a Bia">
+    <header class="chat-topo">
+      <img class="avatar" src="bia.svg" alt="" width="48" height="48">
+      <div class="chat-quem">
+        <strong>Bia</strong>
+        <span><i class="ponto-online" aria-hidden="true"></i>Chef e atendente · online</span>
       </div>
+      <button type="button" class="chat-fechar" id="fecharChat" aria-label="Fechar conversa">×</button>
+    </header>
+
+    <ol id="mensagens" class="mensagens" aria-live="polite"></ol>
+
+    <div class="atalhos" id="atalhos" aria-label="Sugestões">
+      <button type="button" data-texto="O que tem no cardápio hoje?">Cardápio de hoje</button>
+      <button type="button" data-texto="Quais bairros vocês atendem e quanto é a entrega?">Taxas de entrega</button>
+      <button type="button" data-texto="Quanto está meu pedido com a entrega?">Total com entrega</button>
     </div>
-    <p class="hoje" id="hoje"></p>
-  </header>
 
-  <main class="palco">
-    <section class="conversa" aria-label="Conversa com a atendente">
-      <ol id="mensagens" class="mensagens" aria-live="polite"></ol>
+    <button id="verComanda" class="ver-comanda" type="button" aria-controls="comanda" aria-expanded="false">
+      <span>Ver comanda</span><strong id="vTotalMini">R$ 0,00</strong>
+    </button>
 
-      <div class="atalhos" id="atalhos" aria-label="Sugestões">
-        <button type="button" data-texto="O que tem no cardápio hoje?">Cardápio de hoje</button>
-        <button type="button" data-texto="Quais bairros vocês atendem e quanto é a entrega?">Taxas de entrega</button>
-        <button type="button" data-texto="Quanto está meu pedido com a entrega?">Total com entrega</button>
-      </div>
+    <form id="form" class="compor" autocomplete="off">
+      <label for="entrada" class="sr">Sua mensagem</label>
+      <textarea id="entrada" rows="1" maxlength="500" placeholder="Ex.: 2 de frango, sem feijão"></textarea>
+      <button id="enviar" class="btn btn-quente" type="submit">Enviar</button>
+    </form>
 
-      <button id="verComanda" class="ver-comanda" type="button" aria-controls="comanda" aria-expanded="false">
-        <span>Ver comanda</span><strong id="vTotalMini">R$ 0,00</strong>
-      </button>
-
-      <form id="form" class="compor" autocomplete="off">
-        <label for="entrada" class="sr">Sua mensagem</label>
-        <textarea id="entrada" rows="1" maxlength="500" placeholder="Ex.: 2 de frango, uma sem feijão"></textarea>
-        <button id="enviar" class="btn btn-cheio" type="submit">Enviar</button>
-      </form>
-    </section>
-
-    <aside class="comanda" id="comanda" aria-label="Seu pedido">
+    <div class="comanda" id="comanda" aria-label="Seu pedido">
       <div class="papel">
         <div class="papel-topo">
           <div class="papel-titulo"><h2>Comanda</h2><button type="button" id="fecharComanda" class="fechar">Fechar</button></div>
@@ -63,11 +174,16 @@
         <div id="cliente" class="cliente"></div>
         <div id="acoesComanda" class="acoes"></div>
       </div>
-    </aside>
-  </main>
+    </div>
+  </aside>
+</div>
 
+<button id="abrirChat" class="fab" type="button" aria-controls="chat" aria-expanded="false">
+  <img src="bia.svg" alt="" width="44" height="44">
+  <span>Pedir com a Bia</span>
+</button>
 
-
-  <script type="module" src="app.js"></script>
+<script type="module" src="app.js"></script>
+<script type="module" src="vitrine.js"></script>
 </body>
 </html>

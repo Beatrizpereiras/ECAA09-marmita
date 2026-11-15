@@ -1,10 +1,11 @@
 // Interface: liga a conversa e a comanda ao agente.
-import { RESTAURANTE, DIAS, brl, itensDoDia } from "./cardapio.js";
+import { RESTAURANTE, DIAS, ITENS, brl, itensDoDia } from "./cardapio.js";
 import { Pedido, descreverPersonalizacoes } from "./carrinho.js";
 import { Agente } from "./agente.js";
 import { chaveConfigurada } from "./llm.js";
 
 const $ = (id) => document.getElementById(id);
+const ITENS_MARMITA = new Set(ITENS.filter((i) => i.categoria === "marmita").map((i) => i.id));
 
 // Dia da semana: hoje, ou ?dia=0..6 na URL para testar outros cardápios
 const param = new URLSearchParams(location.search).get("dia");
@@ -67,7 +68,7 @@ function mostrarDigitando() {
 function saudacao() {
   const marmitas = itensDoDia(DIA).filter((i) => i.categoria === "marmita");
   const lista = marmitas.map((i) => `- ${i.nome.replace("Marmita de ", "").replace("Marmita ", "")}: ${brl(i.preco)}`).join("\n");
-  let t = `Oi! Eu sou a ${RESTAURANTE.atendente}, da ${RESTAURANTE.nome}. As marmitas de hoje (${DIAS[DIA]}) são:\n${lista}\n\nMe diga o que você quer do seu jeito. Dá para tirar ingredientes, mudar o tempero e escolher o ponto da carne. Também temos acompanhamentos, bebidas e sobremesas.`;
+  let t = `Oi! Eu sou a ${RESTAURANTE.atendente}, chef aqui da ${RESTAURANTE.nome}. Hoje (${DIAS[DIA]}) saem da panela:\n${lista}\n\nToque em **Quero esta** no cardápio ou me diga do seu jeito, por exemplo: "2 de frango, uma sem feijão". Eu tiro ingrediente, ajusto o tempero e o ponto da carne.`;
   if (!chaveConfigurada()) t += "\n\n**Atenção:** a chave da IA ainda não foi colocada no arquivo config.js, então ainda não consigo responder.";
   adicionarMensagem("bot", t);
 }
@@ -136,6 +137,9 @@ function confirmarPedido() {
   const msg = `Pedido nº ${r.numero} confirmado! Total de ${brl(pedido.total())}. ${pedido.entrega.modo === "retirada" ? "Fica pronto para retirada" : "Chega"} em ${RESTAURANTE.previsao}. Bom apetite!`;
   agente.registrarEvento(`[O cliente confirmou o pedido nº ${r.numero} clicando no botão da comanda.] ${msg}`);
   adicionarMensagem("bot", msg);
+  // Cartão fidelidade (vitrine.js): 1 selo por marmita confirmada
+  const marmitas = pedido.linhas.filter((l) => l.itemId && ITENS_MARMITA.has(l.itemId)).reduce((t, l) => t + l.qtd, 0);
+  window.dispatchEvent(new CustomEvent("pf:pedido-confirmado", { detail: { marmitas } }));
 }
 
 function novoPedido() {
@@ -176,7 +180,8 @@ $("entrada").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); enviar($("entrada").value); }
 });
 $("entrada").addEventListener("input", ajustarAltura);
-$("atalhos").addEventListener("click", (e) => { const b = e.target.closest("button[data-texto]"); if (b) enviar(b.dataset.texto); });
+// Atalhos do chat e botões "Quero esta" do cardápio: qualquer botão com data-texto vira mensagem
+document.addEventListener("click", (e) => { const b = e.target.closest("button[data-texto]"); if (b && !b.disabled) enviar(b.dataset.texto); });
 
 // ---------- comanda no celular ----------
 function alternarComanda(abrir) {

@@ -3,7 +3,7 @@
 
 export const RESTAURANTE = {
   nome: "Panela de Ferro",
-  atendente: "Nena",
+  atendente: "Bia",
   cidade: "Itajubá – MG",
   horario: "11h às 14h30",
   freteGratisAPartirDe: 10000, // R$ 100,00
