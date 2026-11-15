@@ -107,6 +107,9 @@ function renderDestaque() {
   $("destaquePreco").textContent = brl(especial.preco);
   const b = $("destaqueBtn");
   b.dataset.texto = `Quero 1 ${especial.nome.toLowerCase()}`;
+  // A foto grande do topo é a do especial do dia, para combinar com o cartão
+  const fotoTopo = foto(especial.id, 1600);
+  if (fotoTopo) { const h = $("heroFoto"); h.src = fotoTopo; h.alt = especial.nome; }
 }
 
 // ---------- cartão fidelidade (fica salvo só neste navegador) ----------
