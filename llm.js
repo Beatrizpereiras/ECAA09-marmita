@@ -62,9 +62,11 @@ export async function chamarLLM(system, mensagens, ferramentas) {
   if (!chaveConfigurada()) throw new ErroLLM("O endereço da IA (API_URL) ainda não foi colocado no arquivo config.js.", 0);
   // O modelo é escolhido no Worker; aqui vai só o pedido
   const j = await postar({
-    temperature: 0.2,
-    max_tokens: 450,
-    reasoning_effort: "low", // gpt-oss pensa menos e gasta menos tokens do plano gratuito
+    // gpt-oss foi treinado para temperatura 1: valores baixos fazem o modelo "travar" e soltar lixo ("… ? ? ?")
+    temperature: 1,
+    // O raciocínio do gpt-oss também conta neste limite; com pouco espaço a resposta saía cortada
+    max_tokens: 1024,
+    reasoning_effort: "medium", // pensa o suficiente para não adicionar item que o cliente não pediu
     messages: [{ role: "system", content: system }, ...mensagens],
     tools: ferramentas.map((f) => ({ type: "function", function: f })),
     tool_choice: "auto",
@@ -78,5 +80,7 @@ export async function chamarLLM(system, mensagens, ferramentas) {
   if (chamadas.length) {
     mensagem.tool_calls = chamadas.map((c) => ({ id: c.id, type: "function", function: { name: c.nome, arguments: JSON.stringify(c.args) } }));
   }
-  return { texto: m.content || "", chamadas, mensagem };
+  // finish_reason "length" = o limite de tokens cortou a resposta no meio
+  const cortada = j?.choices?.[0]?.finish_reason === "length";
+  return { texto: m.content || "", chamadas, mensagem, cortada };
 }
