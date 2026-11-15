@@ -3,14 +3,14 @@
     <clipPath id="c"><circle cx="60" cy="60" r="60"/></clipPath>
   </defs>
   <g clip-path="url(#c)">
-    <rect width="120" height="120" fill="#F3D9B8"/>
-    <circle cx="60" cy="60" r="60" fill="#F6E3C8"/>
+    <rect width="120" height="120" fill="#DCE4F7"/>
+    <circle cx="60" cy="60" r="60" fill="#DCE4F7"/>
     <!-- dólmã -->
     <path d="M18 120c3-22 20-33 42-33s39 11 42 33z" fill="#FFFFFF"/>
     <path d="M60 87l-9 4 9 29 9-29z" fill="#E9E3DA"/>
-    <circle cx="52" cy="104" r="2.2" fill="#C2502A"/>
-    <circle cx="52" cy="113" r="2.2" fill="#C2502A"/>
-    <path d="M44 90c5 7 11 10 16 10s11-3 16-10" fill="none" stroke="#C2502A" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="52" cy="104" r="2.2" fill="#E0452B"/>
+    <circle cx="52" cy="113" r="2.2" fill="#E0452B"/>
+    <path d="M44 90c5 7 11 10 16 10s11-3 16-10" fill="none" stroke="#2448A5" stroke-width="4" stroke-linecap="round"/>
     <!-- pescoço -->
     <path d="M52 76h16v12c0 4-16 4-16 0z" fill="#C98F68"/>
     <!-- cabelo atrás -->

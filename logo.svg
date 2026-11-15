@@ -1,12 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Panela de Ferro">
-  <circle cx="32" cy="32" r="32" fill="#C2502A"/>
+  <circle cx="32" cy="32" r="32" fill="#2448A5"/>
+  <circle cx="32" cy="32" r="29.5" fill="none" stroke="#FFFFFF" stroke-width="2"/>
   <!-- vapor -->
-  <path d="M24 13c-3 3 3 5 0 8M32 11c-3 3 3 5 0 8M40 13c-3 3 3 5 0 8" fill="none" stroke="#FBF3E6" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M24 13c-3 3 3 5 0 8M32 11c-3 3 3 5 0 8M40 13c-3 3 3 5 0 8" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/>
   <!-- alças -->
-  <rect x="8" y="31" width="9" height="5" rx="2.5" fill="#1E1A17"/>
-  <rect x="47" y="31" width="9" height="5" rx="2.5" fill="#1E1A17"/>
+  <rect x="8" y="31" width="9" height="5" rx="2.5" fill="#13213F"/>
+  <rect x="47" y="31" width="9" height="5" rx="2.5" fill="#13213F"/>
   <!-- panela -->
-  <path d="M15 27h34v9c0 9-7 15-17 15s-17-6-17-15z" fill="#1E1A17"/>
-  <rect x="13" y="25" width="38" height="5" rx="2.5" fill="#3A332D"/>
-  <path d="M21 37c3 5 7 7 11 7" fill="none" stroke="#FBF3E6" stroke-opacity=".25" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M15 27h34v9c0 9-7 15-17 15s-17-6-17-15z" fill="#13213F"/>
+  <rect x="13" y="25" width="38" height="5" rx="2.5" fill="#E0452B"/>
+  <path d="M21 37c3 5 7 7 11 7" fill="none" stroke="#FFFFFF" stroke-opacity=".25" stroke-width="2.4" stroke-linecap="round"/>
 </svg>
