@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Panela de Ferro | Marmitas em Itajubá</title>
   <meta name="description" content="Peça marmitas conversando com a Nena, atendente virtual da Panela de Ferro.">
-  <!-- Guardrail extra: a página só carrega código próprio e só conversa com os provedores de IA listados -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://api.groq.com https://generativelanguage.googleapis.com https://api.openai.com https://openrouter.ai https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <!-- Guardrail extra: a página só carrega código próprio e só conversa com a API do Groq -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://api.groq.com; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta name="referrer" content="no-referrer">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,7 +24,6 @@
       </div>
     </div>
     <p class="hoje" id="hoje"></p>
-    <button id="abrirConfig" class="btn btn-linha" type="button">Configurar IA</button>
   </header>
 
   <main class="palco">
@@ -68,28 +67,6 @@
   </main>
 
 
-  <dialog id="config" class="config">
-    <form method="dialog" id="formConfig">
-      <h2>Configurar IA</h2>
-      <p class="ajuda">A atendente usa um modelo de linguagem chamado direto do seu navegador. Cole uma chave de API de um dos provedores abaixo. A chave fica só neste navegador e nunca vai para o repositório.</p>
-      <label>Provedor
-        <select id="cfgProvedor"></select>
-      </label>
-      <label>Modelo
-        <input id="cfgModelo" type="text" spellcheck="false">
-      </label>
-      <label>Chave de API
-        <input id="cfgChave" type="password" spellcheck="false" autocomplete="off" placeholder="cole aqui">
-      </label>
-      <a id="cfgLink" class="link" href="#" target="_blank" rel="noopener noreferrer">Onde consigo uma chave?</a>
-      <label class="marcar"><input id="cfgLembrar" type="checkbox"> Lembrar neste navegador</label>
-      <p class="ajuda pequeno">Sem marcar, a chave some quando você fecha a aba. Use uma chave de teste, com limite de gastos.</p>
-      <div class="acoes-dialogo">
-        <button type="button" id="cfgApagar" class="btn btn-linha">Apagar chave</button>
-        <button type="submit" id="cfgSalvar" value="salvar" class="btn btn-cheio">Salvar</button>
-      </div>
-    </form>
-  </dialog>
 
   <script type="module" src="app.js"></script>
 </body>

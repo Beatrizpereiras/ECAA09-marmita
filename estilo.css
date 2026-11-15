@@ -67,8 +67,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .sub { margin: 0.2rem 0 0; font-size: 0.85rem; opacity: 0.85; }
 .hoje { margin: 0; font-size: 0.9rem; white-space: nowrap; }
-.topo .btn-linha { border-color: #fff; color: #fff; }
-.topo .btn-linha:hover { background: #fff; color: #1f3f94; }
 
 /* Botões */
 .btn { border-radius: 999px; padding: 0.55rem 1.1rem; cursor: pointer; font-weight: 700; border: 2px solid transparent; }
@@ -182,25 +180,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .ver-comanda, .fechar { display: none; }
 .papel-titulo { display: flex; justify-content: space-between; align-items: center; }
 
-/* Diálogo de configuração */
-.config {
-  border: 0; border-radius: 1rem; padding: 0; width: min(30rem, calc(100vw - 2rem));
-  background: var(--superficie); color: var(--tinta);
-}
-.config::backdrop { background: #0b1020aa; }
-.config form { padding: 1.4rem; display: grid; gap: 0.85rem; }
-.config h2 { font: 800 1.4rem/1.1 var(--fonte-titulo); margin: 0; }
-.config label { display: grid; gap: 0.3rem; font-weight: 700; font-size: 0.9rem; }
-.config input[type="text"], .config input[type="password"], .config select {
-  font-weight: 400; padding: 0.55rem 0.7rem; border-radius: 0.6rem;
-  border: 2px solid var(--linha); background: var(--esmalte);
-}
-.config .marcar { display: flex; align-items: center; gap: 0.5rem; font-weight: 400; }
-.ajuda { margin: 0; color: var(--tinta-suave); font-size: 0.9rem; }
-.pequeno { font-size: 0.8rem; }
-.link { color: var(--cobalto); font-size: 0.9rem; }
-.acoes-dialogo { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.3rem; }
-
 /* Celular: a comanda vira uma folha que sobe de baixo */
 @media (max-width: 860px) {
   .topo { flex-wrap: wrap; gap: 0.5rem 1rem; }
@@ -229,7 +208,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .topo { padding-inline: 0.9rem; }
   .topo h1 { font-size: 1.35rem; }
   .alca { width: 2rem; height: 2rem; }
-  .topo .btn { padding: 0.35rem 0.8rem; font-size: 0.85rem; }
   .hoje { font-size: 0.82rem; opacity: 0.85; }
 }
 @media (prefers-reduced-motion: reduce) {

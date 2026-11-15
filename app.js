@@ -1,8 +1,8 @@
-// Interface: liga a conversa, a comanda e a configuração da IA.
+// Interface: liga a conversa e a comanda ao agente.
 import { RESTAURANTE, DIAS, brl, itensDoDia } from "./cardapio.js";
 import { Pedido, descreverPersonalizacoes } from "./carrinho.js";
 import { Agente } from "./agente.js";
-import { PROVEDORES } from "./llm.js";
+import { chaveConfigurada } from "./llm.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -11,26 +11,9 @@ const param = new URLSearchParams(location.search).get("dia");
 const DIA = /^[0-6]$/.test(param ?? "") ? Number(param) : new Date().getDay();
 const dataTexto = new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
 
-// ---------- configuração da IA (só no navegador) ----------
-const CHAVE_STORAGE = "panela-de-ferro.ia";
-function lerConfig() {
-  for (const st of [sessionStorage, localStorage]) {
-    try { const v = JSON.parse(st.getItem(CHAVE_STORAGE) || "null"); if (v) return v; } catch { /* storage indisponível */ }
-  }
-  return { provedor: "groq", modelo: PROVEDORES.groq.modelo, chave: "" };
-}
-let config = lerConfig();
-function salvarConfig(cfg, lembrar) {
-  config = cfg;
-  try {
-    localStorage.removeItem(CHAVE_STORAGE); sessionStorage.removeItem(CHAVE_STORAGE);
-    (lembrar ? localStorage : sessionStorage).setItem(CHAVE_STORAGE, JSON.stringify(cfg));
-  } catch { /* segue só em memória */ }
-}
-
 // ---------- estado ----------
 const pedido = new Pedido(DIA);
-const agente = new Agente({ pedido, obterConfig: () => config, dia: DIA, dataTexto });
+const agente = new Agente({ pedido, dia: DIA, dataTexto });
 
 // ---------- mensagens (sempre via textContent: nada do modelo vira HTML) ----------
 function linhaComNegrito(texto, el) {
@@ -85,7 +68,7 @@ function saudacao() {
   const marmitas = itensDoDia(DIA).filter((i) => i.categoria === "marmita");
   const lista = marmitas.map((i) => `- ${i.nome.replace("Marmita de ", "").replace("Marmita ", "")}: ${brl(i.preco)}`).join("\n");
   let t = `Oi! Eu sou a ${RESTAURANTE.atendente}, da ${RESTAURANTE.nome}. As marmitas de hoje (${DIAS[DIA]}) são:\n${lista}\n\nMe diga o que você quer do seu jeito. Dá para tirar ingredientes, mudar o tempero e escolher o ponto da carne. Também temos acompanhamentos, bebidas e sobremesas.`;
-  if (!config.chave) t += "\n\nAntes da primeira mensagem, toque em **Configurar IA** e cole uma chave de API (leva um minuto).";
+  if (!chaveConfigurada()) t += "\n\n**Atenção:** a chave da IA ainda não foi colocada no arquivo config.js, então ainda não consigo responder.";
   adicionarMensagem("bot", t);
 }
 
@@ -168,7 +151,6 @@ let ocupado = false;
 async function enviar(texto) {
   texto = texto.trim();
   if (!texto || ocupado) return;
-  if (!config.chave) { abrirConfig(); return; }
   ocupado = true; $("enviar").disabled = true;
   adicionarMensagem("cliente", texto);
   $("entrada").value = ""; ajustarAltura();
@@ -180,7 +162,6 @@ async function enviar(texto) {
   } catch (e) {
     dig.remove();
     adicionarMensagem("bot", e?.message || "Algo deu errado ao falar com a IA. Tente de novo.", { tipo: "erro" });
-    if (e?.status === 401 || e?.status === 403) abrirConfig();
   } finally {
     ocupado = false; $("enviar").disabled = false; $("entrada").focus();
   }
@@ -207,31 +188,6 @@ $("verComanda").addEventListener("click", () => alternarComanda(true));
 $("fecharComanda").addEventListener("click", () => alternarComanda(false));
 $("comanda").addEventListener("click", (e) => { if (e.target === $("comanda")) alternarComanda(false); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("comanda").classList.contains("aberta")) alternarComanda(false); });
-
-// ---------- diálogo de configuração ----------
-const sel = $("cfgProvedor");
-for (const [id, p] of Object.entries(PROVEDORES)) { const o = document.createElement("option"); o.value = id; o.textContent = p.nome; sel.append(o); }
-function atualizarLink() { $("cfgLink").href = PROVEDORES[sel.value].chave; }
-sel.addEventListener("change", () => { $("cfgModelo").value = PROVEDORES[sel.value].modelo; atualizarLink(); });
-
-function abrirConfig() {
-  sel.value = PROVEDORES[config.provedor] ? config.provedor : "groq";
-  $("cfgModelo").value = config.modelo || PROVEDORES[sel.value].modelo;
-  $("cfgChave").value = config.chave || "";
-  let lembrado = false; try { lembrado = !!localStorage.getItem(CHAVE_STORAGE); } catch { /* */ }
-  $("cfgLembrar").checked = lembrado;
-  atualizarLink();
-  $("config").showModal();
-}
-$("abrirConfig").addEventListener("click", abrirConfig);
-$("formConfig").addEventListener("submit", () => {
-  salvarConfig({ provedor: sel.value, modelo: $("cfgModelo").value.trim() || PROVEDORES[sel.value].modelo, chave: $("cfgChave").value.trim() }, $("cfgLembrar").checked);
-});
-$("cfgApagar").addEventListener("click", () => {
-  salvarConfig({ provedor: sel.value, modelo: $("cfgModelo").value.trim(), chave: "" }, false);
-  try { sessionStorage.removeItem(CHAVE_STORAGE); } catch { /* */ }
-  $("cfgChave").value = "";
-});
 
 // ---------- início ----------
 $("hoje").textContent = `Hoje é ${DIAS[DIA]}`;
