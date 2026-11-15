@@ -1,18 +1,16 @@
-// Cliente da IA (Groq), chamado direto do navegador. Sem servidor.
-import { GROQ_API_KEY, GROQ_MODELO } from "./config.js";
+// Cliente da IA. O site chama o Worker no Cloudflare, que guarda a chave do Groq em segredo
+// e repassa o pedido. Assim a chave nunca aparece no navegador.
+import { API_URL } from "./config.js";
 
-const URL_GROQ = "https://api.groq.com/openai/v1/chat/completions";
-let chave = GROQ_API_KEY;
-
-// Só os testes automáticos usam isto, para simular uma chave
-export function usarChaveDeTeste(k) { chave = k; }
+// Mantido só para os testes automáticos (não existe mais chave no site)
+export function usarChaveDeTeste() {}
 
 export class ErroLLM extends Error {
   constructor(msg, status) { super(msg); this.status = status; }
 }
 
 export function chaveConfigurada() {
-  return typeof chave === "string" && chave.startsWith("gsk_");
+  return typeof API_URL === "string" && API_URL.startsWith("https://");
 }
 
 function lerArgs(s) {
@@ -35,9 +33,9 @@ function segundosParaEsperar(resp, mensagem) {
 async function postar(body, tentativa = 0) {
   let resp;
   try {
-    resp = await fetch(URL_GROQ, {
+    resp = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${chave}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
   } catch {
@@ -52,7 +50,7 @@ async function postar(body, tentativa = 0) {
       if (s <= 30) { await esperar(Math.ceil(s * 1000) + 300); return postar(body, tentativa + 1); }
     }
     const msg = resp.status === 401 || resp.status === 403
-      ? "A chave da IA foi recusada ou desativada. A dona do site precisa atualizar o arquivo config.js."
+      ? "A chave da IA foi recusada ou desativada. A dona do site precisa atualizar o segredo GROQ_API_KEY no Cloudflare."
       : resp.status === 429 ? "A IA atingiu o limite por minuto do plano gratuito. Espere um minuto e mande de novo, um pedido por vez."
       : `Erro da IA (${resp.status}).`;
     throw new ErroLLM(det ? `${msg} Detalhe: ${det.slice(0, 160)}` : msg, resp.status);
@@ -61,9 +59,9 @@ async function postar(body, tentativa = 0) {
 }
 
 export async function chamarLLM(system, mensagens, ferramentas) {
-  if (!chaveConfigurada()) throw new ErroLLM("A chave da IA ainda não foi colocada no arquivo config.js.", 0);
+  if (!chaveConfigurada()) throw new ErroLLM("O endereço da IA (API_URL) ainda não foi colocado no arquivo config.js.", 0);
+  // O modelo é escolhido no Worker; aqui vai só o pedido
   const j = await postar({
-    model: GROQ_MODELO,
     temperature: 0.2,
     max_tokens: 450,
     reasoning_effort: "low", // gpt-oss pensa menos e gasta menos tokens do plano gratuito
