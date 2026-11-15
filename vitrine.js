@@ -112,11 +112,13 @@ function renderDestaque() {
   if (fotoTopo) { const h = $("heroFoto"); h.src = fotoTopo; h.alt = especial.nome; }
 }
 
-// ---------- cartão fidelidade (fica salvo só neste navegador) ----------
+// ---------- cartão fidelidade (começa vazio a cada visita; carimba só depois de confirmar) ----------
 const META = 10;
-const CHAVE = "pf_selos";
-function lerSelos() { try { return Math.max(0, Number(localStorage.getItem(CHAVE)) || 0); } catch { return 0; } }
-function salvarSelos(n) { try { localStorage.setItem(CHAVE, String(n)); } catch { /* sem armazenamento: só não guarda */ } }
+let selos = 0;
+// Apaga selos que versões antigas do site deixaram salvos no navegador
+try { localStorage.removeItem("pf_selos"); } catch { /* sem armazenamento: nada a apagar */ }
+function lerSelos() { return selos; }
+function salvarSelos(n) { selos = n; }
 
 function renderSelos(animarAte = -1) {
   const n = lerSelos();

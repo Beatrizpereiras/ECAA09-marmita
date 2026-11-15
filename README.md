@@ -100,7 +100,7 @@ Em **Settings → Pages**, escolha **Deploy from a branch**, branch `main`, past
 
 ## Cartão fidelidade
 
-Cada marmita confirmada carimba 1 selo; com 10 selos a próxima é por conta da casa. Como o site não tem servidor nem cadastro, os selos ficam salvos só no navegador do cliente (`localStorage`). O cartão é só visual: o agente continua sem poder dar desconto, então o resgate seria feito na entrega.
+Cada marmita confirmada carimba 1 selo; com 10 selos a próxima é por conta da casa. O cartão começa vazio a cada visita e só ganha selo depois que o cliente clica em Confirmar pedido (como o site não tem servidor nem cadastro, os selos não ficam guardados entre visitas). O cartão é só visual: o agente continua sem poder dar desconto, então o resgate seria feito na entrega.
 
 ## Observações
 
