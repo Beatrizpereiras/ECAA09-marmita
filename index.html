@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Panela de Ferro | Marmitas em Itajubá</title>
   <meta name="description" content="Peça marmitas conversando com a Nena, atendente virtual da Panela de Ferro.">
-  <!-- Guardrail extra: a página só carrega código próprio e só conversa com a API do Groq -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://api.groq.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <!-- Guardrail extra: a página só carrega código próprio e só conversa com o Worker do Cloudflare (que fala com o Groq) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://marmita-api.pereirabeatrizsilva.workers.dev; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta name="referrer" content="no-referrer">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
