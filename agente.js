@@ -1,5 +1,5 @@
 // Agente de vendas: LLM + ferramentas (function calling) + guardrails.
-import { RESTAURANTE, DIAS, BAIRROS, brl, itensDoDia, itemParaAgente, valoresDeReferencia, normalizar } from "./cardapio.js";
+import { RESTAURANTE, DIAS, BAIRROS, brl, itensDoDia, itemParaAgente, valoresDeReferencia, normalizar, buscarItem } from "./cardapio.js";
 import { PAGAMENTOS } from "./carrinho.js";
 import { chamarLLM } from "./llm.js";
 import { verificarEntrada, verificarSaida, extrairValores, LimitadorTaxa, gerarCanario } from "./guardrails.js";
@@ -7,6 +7,31 @@ import { verificarEntrada, verificarSaida, extrairValores, LimitadorTaxa, gerarC
 const MAX_PASSOS = 6;          // máximo de rodadas de ferramenta por mensagem
 const MAX_HISTORICO = 14;      // mensagens mantidas no contexto (menos tokens por chamada)
 const BLOQUEIO_MS = 60_000;    // pausa após 3 tentativas de ataque
+
+// ---------- Trava: só entra na comanda item que o cliente citou ----------
+// Palavras genéricas que não identificam um item sozinhas
+const GENERICAS = new Set(["marmita", "porcao", "lata", "fatia", "extra", "natural", "mineral", "avulso", "com", "sem"]);
+const palavras = (t) => normalizar(t).replace(/[^a-z0-9 ]/g, " ").split(" ").filter((w) => w.length >= 4);
+
+function palavrasDoItem(item) {
+  const sabores = item.opcoes?.sabor || [];
+  return [...new Set(palavras([item.nome, item.id, ...sabores].join(" ")))].filter((p) => !GENERICAS.has(p) && !/^\d/.test(p));
+}
+
+// Compara pelo começo da palavra para aceitar plural e abreviação ("pudins", "refri")
+export function textoCitaItem(texto, item) {
+  const ditas = palavras(texto);
+  return palavrasDoItem(item).some((p) => ditas.some((w) => w.startsWith(p.slice(0, 4)) || p.startsWith(w.slice(0, 4))));
+}
+
+// Resposta "quebrada": muitas linhas sem palavras ("… ? ? ?", "...", "---")
+export function textoQuebrado(t) {
+  const s = String(t || "").trim();
+  if (!s) return false;
+  const linhas = s.split("\n").map((l) => l.trim()).filter(Boolean);
+  const ruins = linhas.filter((l) => (l.match(/[a-zà-ú]/gi) || []).length < 3).length;
+  return ruins / linhas.length > 0.3;
+}
 
 // Esquemas enxutos: cada chamada à IA reenvia tudo isto, e o plano gratuito limita tokens por minuto
 const TXT = { type: "string" };
@@ -48,6 +73,7 @@ Seu único trabalho é vender itens do cardápio de hoje, com personalizações,
 
 Como atender:
 - Consulte ver_cardapio antes de citar itens ou preços. Nunca invente nada.
+- Só chame adicionar_item para o que o cliente pediu com clareza. Pergunta sobre opções ("quais sobremesas?", "o que tem de bebida?") é só para listar: mostre as opções e pergunte qual ele quer. Na dúvida, pergunte antes de adicionar.
 - Entenda o pedido em texto livre e use os ids do cardápio. Uma chamada de adicionar_item por combinação de personalização. Se o cliente pedir várias coisas, chame todas as ferramentas na MESMA resposta, em paralelo.
 - Personalização fora das opções do item: explique e ofereça as que existem. Item de outro dia: diga quando tem e sugira algo de hoje.
 - Valores só das ferramentas. Com entrega definida, informe subtotal, taxa e total.
@@ -101,7 +127,14 @@ export class Agente {
           frete_gratis: `pedidos a partir de ${brl(RESTAURANTE.freteGratisAPartirDe)} (subtotal)`,
           retirada: "retirada no balcão não tem taxa",
         };
-      case "adicionar_item": return this._curto(p.adicionar(args));
+      case "adicionar_item": {
+        // Trava no código: a IA não consegue colocar na comanda algo que o cliente não citou
+        const item = buscarItem(args?.item_id);
+        if (item && !textoCitaItem(this._contextoCliente(), item)) {
+          return { ok: false, erro: `O cliente não pediu "${item.nome}". Não adicione: pergunte o que ele quer.` };
+        }
+        return this._curto(p.adicionar(args));
+      }
       case "alterar_item": return this._curto(p.alterar(args));
       case "remover_item": return this._curto(p.remover(args));
       case "ver_pedido": return { ok: true, pedido: p.resumo() };
@@ -109,6 +142,19 @@ export class Agente {
       case "fechar_pedido": return p.fechar(args);
       default: return { ok: false, erro: `Ferramenta desconhecida: ${nome}.` };
     }
+  }
+
+  // O que o cliente disse nas últimas mensagens + a última fala da atendente
+  // (assim "sim" depois de "quer um pudim?" vale como pedido de pudim)
+  _contextoCliente() {
+    const textos = [];
+    let falaAtendente = "";
+    for (let i = this.historico.length - 1; i >= 0 && textos.length < 3; i--) {
+      const m = this.historico[i];
+      if (m.role === "user") textos.push(m.content);
+      else if (m.role === "assistant" && !falaAtendente && textos.length >= 1 && m.content) falaAtendente = m.content;
+    }
+    return [...textos, falaAtendente].join("\n");
   }
 
   // Depois de alterar o pedido, devolve só os totais (o pedido completo sai em ver_pedido)
@@ -181,8 +227,16 @@ export class Agente {
     this._aparar();
     let final = null;
     try {
+      let refez = false;
       for (let passo = 0; passo < MAX_PASSOS; passo++) {
         const r = await this.chamar(this.system, this.historico, FERRAMENTAS);
+        // Resposta cortada ou "quebrada": descarta e pede de novo uma vez
+        if (!r.chamadas.length && (r.cortada || textoQuebrado(r.texto))) {
+          if (!refez) { refez = true; continue; }
+          final = "Desculpe, me enrolei aqui. A comanda ao lado está certinha. Pode repetir o que você quer?";
+          this.historico.push({ role: "assistant", content: final });
+          break;
+        }
         this.historico.push(r.mensagem);
         if (!r.chamadas.length) { final = r.texto; break; }
         for (const c of r.chamadas) {
