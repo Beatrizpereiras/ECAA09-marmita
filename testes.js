@@ -1,7 +1,8 @@
 // Testes sem dependências: node testes.js
 import assert from "node:assert/strict";
 import { Pedido } from "./carrinho.js";
-import { Agente } from "./agente.js";
+import { Agente, textoCitaItem, textoQuebrado } from "./agente.js";
+import { buscarItem } from "./cardapio.js";
 import { verificarEntrada, verificarSaida, extrairValores } from "./guardrails.js";
 import { chamarLLM, usarChaveDeTeste } from "./llm.js";
 
@@ -198,6 +199,61 @@ await t("erro no meio da rodada deixa a IA ciente da comanda", async () => {
   await assert.rejects(ag.responder("um pudim"));
   assert.match(ag.historico.at(-1).content, /Pudim/);
   assert.equal(ag.historico.some((m) => m.role === "tool"), false);
+});
+
+// ---------- Bug do pudim e respostas quebradas ----------
+await t("pergunta sobre sobremesas não coloca pudim na comanda", async () => {
+  const p = new Pedido(1);
+  let i = 0;
+  const falso = async () => {
+    if (i++ === 0) {
+      return { texto: "", chamadas: [{ id: "a", nome: "adicionar_item", args: { item_id: "pudim", quantidade: 1 } }],
+        mensagem: { role: "assistant", content: null, tool_calls: [{ id: "a", type: "function", function: { name: "adicionar_item", arguments: "{}" } }] } };
+    }
+    return { texto: "Temos pudim de leite. Quer?", chamadas: [], mensagem: { role: "assistant", content: "Temos pudim de leite. Quer?" } };
+  };
+  const ag = new Agente({ pedido: p, dia: 1, dataTexto: "x", chamar: falso });
+  await ag.responder("quais as opções de sobremesa?");
+  assert.equal(p.linhas.length, 0);
+  assert.match(ag.historico.find((m) => m.role === "tool").content, /não pediu/);
+});
+await t("'sim' depois da oferta da atendente adiciona o item", async () => {
+  const p = new Pedido(1);
+  let i = 0;
+  const falso = async () => {
+    const r = [
+      { texto: "Temos pudim de leite por R$ 7,00. Quer um?", chamadas: [] },
+      { texto: "", chamadas: [{ id: "b", nome: "adicionar_item", args: { item_id: "pudim", quantidade: 1 } }] },
+      { texto: "Pronto, pudim na comanda!", chamadas: [] },
+    ][i++];
+    const msg = { role: "assistant", content: r.texto || null };
+    if (r.chamadas.length) msg.tool_calls = [{ id: "b", type: "function", function: { name: "adicionar_item", arguments: "{}" } }];
+    return { ...r, mensagem: msg };
+  };
+  const ag = new Agente({ pedido: p, dia: 1, dataTexto: "x", chamar: falso });
+  await ag.responder("tem sobremesa?");
+  ag.limitador.ultima = 0;
+  await ag.responder("sim");
+  assert.equal(p.linhas.length, 1);
+});
+await t("reconhece item citado de várias formas", () => {
+  assert.equal(textoCitaItem("2 pudins por favor", buscarItem("pudim")), true);
+  assert.equal(textoCitaItem("um refri de guaraná", buscarItem("refrigerante-lata")), true);
+  assert.equal(textoCitaItem("quero agua com gás", buscarItem("agua")), true);
+  assert.equal(textoCitaItem("quais as sobremesas?", buscarItem("pudim")), false);
+});
+await t("resposta quebrada é refeita e não aparece para o cliente", async () => {
+  assert.equal(textoQuebrado("1. Pedido … ? ? ? ?\nDesculpe…\n---\n...\n...\n..."), true);
+  assert.equal(textoQuebrado("- Marmita de frango – R$ 21,90\n- Pudim de leite – R$ 7,00\nTotal: R$ 28,90"), false);
+  let n = 0;
+  const falso = async () => {
+    const texto = n++ === 0 ? "… ? ? ?\n...\n..." : "Oi! O que vai ser hoje?";
+    return { texto, chamadas: [], mensagem: { role: "assistant", content: texto } };
+  };
+  const ag = new Agente({ pedido: new Pedido(1), dia: 1, dataTexto: "x", chamar: falso });
+  const r = await ag.responder("oi");
+  assert.equal(r.texto, "Oi! O que vai ser hoje?");
+  assert.equal(n, 2);
 });
 
 console.log(`\n${ok} testes passaram.`);
