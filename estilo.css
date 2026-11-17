@@ -72,14 +72,17 @@ h1, h2, h3 { font-family: var(--fonte-titulo); letter-spacing: -0.01em; margin: 
   background: #f4f6fae6; backdrop-filter: blur(10px);
   border-bottom: 3px solid var(--cobalto);
 }
-.marca { display: flex; align-items: center; gap: .6rem; text-decoration: none; font: 800 1.25rem/1 var(--fonte-titulo); color: var(--noite); }
-.links { display: flex; gap: 1.25rem; margin-right: auto; }
-.links a { text-decoration: none; color: var(--tinta-suave); font-weight: 700; font-size: .95rem; }
+.marca { display: flex; align-items: center; gap: .6rem; text-decoration: none; font: 800 1.25rem/1 var(--fonte-titulo); color: var(--noite); white-space: nowrap; flex: none; }
+.marca img { flex: none; }
+.links { display: flex; align-items: center; gap: clamp(.9rem, 1.6vw, 1.5rem); margin-right: auto; min-width: 0; }
+.links a { text-decoration: none; color: var(--tinta-suave); font-weight: 700; font-size: .95rem; white-space: nowrap; }
 .links a:hover { color: var(--cobalto); }
 .hoje {
   margin: 0; font-size: .85rem; font-weight: 700; color: var(--cobalto);
-  background: #2448a51a; padding: .35rem .8rem; border-radius: 999px; white-space: nowrap;
+  background: #2448a51a; padding: .35rem .8rem; border-radius: 999px; white-space: nowrap; flex: none;
 }
+/* Cabeçalho sempre em uma linha: quando falta espaço ao lado do chat, os links saem antes de quebrar */
+@media (max-width: 1360px) and (min-width: 1101px) { .links { display: none; } .nav { justify-content: space-between; } }
 
 /* ---------- Hero ---------- */
 .hero {
