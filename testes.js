@@ -263,6 +263,7 @@ await t("cartão fidelidade: cria na 1ª compra, soma com o código e resgata co
   globalThis.localStorage = { getItem: (k) => mem[k] ?? null, setItem: (k, v) => { mem[k] = String(v); } };
   _reiniciarParaTeste();
   assert.equal(extrairCodigo("sim, meu código é cf 4821"), "CF-4821");
+  assert.equal(extrairCodigo("CF\u20114821"), "CF-4821"); // hífen tipográfico
   assert.equal(extrairCodigo("quero 2 marmitas"), null);
   assert.equal(extrairCodigo("PF-4821"), null); // formato do canário não é código de cartão
   assert.equal(registrarCompra(0), null); // só bebida e sem cartão: não cria

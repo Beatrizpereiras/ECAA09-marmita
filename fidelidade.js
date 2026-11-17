@@ -6,7 +6,8 @@
 // sistema da loja, nunca pela IA, e o formato CF- é diferente do canário secreto (PF-...).
 export const META = 10;
 const CHAVE = "pf_cartoes";
-const REGEX_CODIGO = /\bCF[\s-]?(\d{4})\b/i;
+// aceita "CF-4821", "cf 4821", "CF4821" e hífens tipográficos que a IA às vezes usa (‐ ‑ – —)
+const REGEX_CODIGO = /\bCF[\s\-\u2010\u2011\u2013\u2014]?(\d{4})\b/i;
 
 let atual = null; // código vinculado nesta visita
 
@@ -68,14 +69,14 @@ export function registrarCompra(marmitas) {
 // Texto que a Bia mostra depois da confirmação
 export function mensagemCompra(r) {
   if (!r) return "";
-  const conta = `${Math.min(r.selos, META)} de ${META} selos`;
+  const conta = `você tem ${Math.min(r.selos, META)} de ${META} selos`;
   const partes = [];
   if (r.resgatou) partes.push("Sua marmita grátis do cartão fidelidade foi usada neste pedido: o desconto é dado na entrega.");
   if (r.criado) {
     partes.push(`Você ganhou o **Cartão Fidelidade Panela de Ferro**! Seu código é **${r.codigo}**. Guarde ele: no próximo pedido é só me passar o código.`);
-    partes.push(`Este pedido já carimbou ${r.ganhou} ${r.ganhou === 1 ? "selo" : "selos"}: agora são ${conta}.`);
+    partes.push(`Este pedido já carimbou ${r.ganhou} ${r.ganhou === 1 ? "selo" : "selos"}: ${conta}.`);
   } else if (r.ganhou > 0) {
-    partes.push(`Carimbei ${r.ganhou} ${r.ganhou === 1 ? "selo" : "selos"} no seu cartão **${r.codigo}**: agora são ${conta}.`);
+    partes.push(`Carimbei ${r.ganhou} ${r.ganhou === 1 ? "selo" : "selos"} no seu cartão **${r.codigo}**: agora ${conta}.`);
   }
   if (r.completo) partes.push(`Cartão completo! No próximo pedido, me passe o código ${r.codigo}: uma marmita sai por nossa conta.`);
   return partes.join("\n");
