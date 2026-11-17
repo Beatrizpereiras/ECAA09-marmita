@@ -82,7 +82,11 @@ h1, h2, h3 { font-family: var(--fonte-titulo); letter-spacing: -0.01em; margin: 
   background: #2448a51a; padding: .35rem .8rem; border-radius: 999px; white-space: nowrap; flex: none;
 }
 /* Cabeçalho sempre em uma linha: quando falta espaço ao lado do chat, os links saem antes de quebrar */
-@media (max-width: 1360px) and (min-width: 1101px) { .links { display: none; } .nav { justify-content: space-between; } }
+/* Medido com a fonte real: cabeçalho completo = 825px, sem o selo "Hoje é" = 664px.
+   Quando aperta, sai primeiro o selo do dia; os links só saem no celular. */
+@media (min-width: 1101px) and (max-width: 1250px) { .hoje { display: none; } }
+@media (max-width: 860px) { .hoje { display: none; } }
+@media (max-width: 700px) { .links { display: none; } .hoje { display: block; } .nav { justify-content: space-between; } }
 
 /* ---------- Hero ---------- */
 .hero {
@@ -350,7 +354,6 @@ h1, h2, h3 { font-family: var(--fonte-titulo); letter-spacing: -0.01em; margin: 
 /* ---------- Telas médias: o chat vira uma gaveta ---------- */
 @media (max-width: 1100px) {
   .site { grid-template-columns: 1fr; }
-  .links { display: none; }
   .nav { justify-content: space-between; }
   .fab { display: inline-flex; }
   .chat {
