@@ -3,6 +3,7 @@ import { RESTAURANTE, DIAS, ITENS, brl, itensDoDia } from "./cardapio.js";
 import { Pedido, descreverPersonalizacoes } from "./carrinho.js";
 import { Agente } from "./agente.js";
 import { chaveConfigurada } from "./llm.js";
+import { extrairCodigo, vincular, registrarCompra, mensagemCompra, cartaoAtual, META } from "./fidelidade.js";
 
 const $ = (id) => document.getElementById(id);
 const ITENS_MARMITA = new Set(ITENS.filter((i) => i.categoria === "marmita").map((i) => i.id));
@@ -118,8 +119,9 @@ function renderComanda() {
     estado.textContent = `${DIAS[DIA]}, em aberto`;
   } else if (pedido.status === "aguardando_confirmacao") {
     estado.textContent = "Confira tudo antes de confirmar";
-    const b = document.createElement("button"); b.className = "btn btn-confirmar"; b.type = "button"; b.textContent = `Confirmar pedido de ${brl(pedido.total())}`;
-    b.addEventListener("click", confirmarPedido);
+    const b = document.createElement("button"); b.type = "button";
+    if (ocupado) { b.className = "btn btn-espera"; b.disabled = true; b.textContent = "Aguarde a Bia terminar…"; }
+    else { b.className = "btn btn-confirmar"; b.textContent = `Confirmar pedido de ${brl(pedido.total())}`; b.addEventListener("click", confirmarPedido); }
     acoes.append(b);
   } else {
     estado.textContent = `Pedido nº ${pedido.numero}`;
@@ -135,6 +137,9 @@ function renderComanda() {
 // Botão grande dentro do chat, logo acima de "Ver comanda": o cliente confirma sem precisar abrir a comanda
 function renderAcaoChat() {
   const area = $("acaoChat"); area.replaceChildren();
+  const cartao = cartaoAtual();
+  if (cartao) area.append(Object.assign(document.createElement("span"), { className: "chip-cartao", textContent: `Cartão ${cartao.codigo} · ${Math.min(cartao.selos, META)}/${META} selos` }));
+  if (ocupado) return; // enquanto a Bia escreve, nada de confirmar (evita resposta atrasada depois da confirmação)
   if (pedido.status === "aguardando_confirmacao") {
     const b = document.createElement("button"); b.className = "btn btn-confirmar"; b.type = "button";
     b.textContent = `Confirmar pedido de ${brl(pedido.total())}`;
@@ -148,14 +153,17 @@ function renderAcaoChat() {
 }
 
 function confirmarPedido() {
+  if (ocupado) return;
   const r = pedido.confirmar();
   if (!r.ok) return;
   const msg = `Pedido nº ${r.numero} confirmado! Total de ${brl(pedido.total())}. ${pedido.entrega.modo === "retirada" ? "Fica pronto para retirada" : "Chega"} em ${RESTAURANTE.previsao}. Bom apetite!`;
-  agente.registrarEvento(`[O cliente confirmou o pedido nº ${r.numero} clicando no botão da comanda.] ${msg}`);
-  adicionarMensagem("bot", msg);
-  // Cartão fidelidade (vitrine.js): 1 selo por marmita confirmada
+  // Cartão fidelidade (fidelidade.js): 1 selo por marmita confirmada; cria o cartão na primeira compra
   const marmitas = pedido.linhas.filter((l) => l.itemId && ITENS_MARMITA.has(l.itemId)).reduce((t, l) => t + l.qtd, 0);
-  window.dispatchEvent(new CustomEvent("pf:pedido-confirmado", { detail: { marmitas } }));
+  const fid = mensagemCompra(registrarCompra(marmitas));
+  const texto = fid ? `${msg}\n\n${fid}` : msg;
+  agente.registrarEvento(`[O cliente confirmou o pedido nº ${r.numero} clicando no botão da comanda.] ${texto.replace(/\*\*/g, "")}`);
+  adicionarMensagem("bot", texto);
+  renderAcaoChat();
 }
 
 function novoPedido() {
@@ -175,8 +183,20 @@ async function enviar(texto) {
   adicionarMensagem("cliente", texto);
   $("entrada").value = ""; ajustarAltura();
   const dig = mostrarDigitando();
+  renderComanda(); // esconde o botão de confirmar enquanto a Bia responde
+  // Código do cartão fidelidade na mensagem: o site confere e avisa a IA por uma nota do sistema
+  let nota = "";
+  const codigo = extrairCodigo(texto);
+  if (codigo) {
+    const v = vincular(codigo);
+    nota = v.ok
+      ? `cartão fidelidade ${v.codigo} encontrado e vinculado a este pedido, com ${Math.min(v.selos, META)} de ${META} selos${v.completo ? " (cartão completo: a próxima marmita deste pedido sai grátis, com desconto dado na entrega)" : ""}. Os novos selos são carimbados quando o cliente confirmar.`
+      : cartaoAtual()
+        ? `o código ${codigo} não foi encontrado. Peça para o cliente conferir; o cartão ${cartaoAtual().codigo}, já vinculado, continua valendo.`
+        : `o código ${codigo} não foi encontrado. Peça para o cliente conferir; se não tiver o código certo, um cartão novo é criado quando ele confirmar o pedido.`;
+  }
   try {
-    const r = await agente.responder(texto);
+    const r = await agente.responder(texto, nota);
     dig.remove();
     adicionarMensagem("bot", r.texto, { tipo: r.tipo === "conferir" ? "normal" : r.tipo, nota: r.nota });
   } catch (e) {
@@ -184,6 +204,7 @@ async function enviar(texto) {
     adicionarMensagem("bot", e?.message || "Algo deu errado ao falar com a IA. Tente de novo.", { tipo: "erro" });
   } finally {
     ocupado = false; $("enviar").disabled = false; $("entrada").focus();
+    renderComanda(); // agora sim mostra o botão de confirmar, se o pedido estiver fechado
   }
 }
 

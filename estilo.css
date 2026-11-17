@@ -197,6 +197,7 @@ h1, h2, h3 { font-family: var(--fonte-titulo); letter-spacing: -0.01em; margin: 
 }
 .cartao-topo { display: flex; align-items: center; gap: .65rem; }
 .cartao-topo div { display: grid; line-height: 1.15; }
+.cartao-codigo { margin-left: auto; font: 600 .85rem var(--fonte-comanda); background: #ffffff26; padding: .25rem .6rem; border-radius: 999px; white-space: nowrap; }
 .cartao-topo strong { font: 800 1.15rem var(--fonte-titulo); }
 .cartao-topo span { font-size: .8rem; opacity: .8; }
 .selos { list-style: none; padding: 0; margin: 1.1rem 0 .9rem; display: grid; grid-template-columns: repeat(5, 1fr); gap: .6rem; }
@@ -280,6 +281,9 @@ h1, h2, h3 { font-family: var(--fonte-titulo); letter-spacing: -0.01em; margin: 
 
 .acao-chat { display: grid; margin: 0 0 .5rem; }
 .acao-chat:empty { display: none; }
+.acao-chat { gap: .4rem; }
+.chip-cartao { justify-self: start; font-size: .8rem; font-weight: 700; color: var(--cobalto); background: var(--cobalto-suave); border-radius: 999px; padding: .25rem .7rem; }
+.btn-espera { background: var(--gelo-2); color: var(--tinta-suave); cursor: progress; }
 .acao-chat .btn { width: 100%; padding: .85rem 1rem; font-size: 1rem; }
 .acao-chat .btn-confirmar { box-shadow: 0 8px 20px -10px var(--verde); animation: chamar 1.6s ease-in-out 3; }
 @keyframes chamar { 0%, 100% { transform: none; } 50% { transform: scale(1.03); } }

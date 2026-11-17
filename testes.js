@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { Pedido } from "./carrinho.js";
 import { Agente, textoCitaItem, textoQuebrado } from "./agente.js";
 import { buscarItem } from "./cardapio.js";
+import { extrairCodigo, vincular, registrarCompra, mensagemCompra, cartaoAtual, _reiniciarParaTeste } from "./fidelidade.js";
 import { verificarEntrada, verificarSaida, extrairValores } from "./guardrails.js";
 import { chamarLLM, usarChaveDeTeste } from "./llm.js";
 
@@ -254,6 +255,36 @@ await t("resposta quebrada é refeita e não aparece para o cliente", async () =
   const r = await ag.responder("oi");
   assert.equal(r.texto, "Oi! O que vai ser hoje?");
   assert.equal(n, 2);
+});
+
+// ---------- Cartão fidelidade com código ----------
+await t("cartão fidelidade: cria na 1ª compra, soma com o código e resgata com 10 selos", () => {
+  const mem = {};
+  globalThis.localStorage = { getItem: (k) => mem[k] ?? null, setItem: (k, v) => { mem[k] = String(v); } };
+  _reiniciarParaTeste();
+  assert.equal(extrairCodigo("sim, meu código é cf 4821"), "CF-4821");
+  assert.equal(extrairCodigo("quero 2 marmitas"), null);
+  assert.equal(extrairCodigo("PF-4821"), null); // formato do canário não é código de cartão
+  assert.equal(registrarCompra(0), null); // só bebida e sem cartão: não cria
+  const r1 = registrarCompra(2);
+  assert.equal(r1.criado, true); assert.equal(r1.selos, 2); assert.match(r1.codigo, /^CF-\d{4}$/);
+  assert.match(mensagemCompra(r1), new RegExp(r1.codigo));
+  _reiniciarParaTeste(); // cliente volta outro dia
+  assert.equal(cartaoAtual(), null);
+  assert.equal(vincular("CF-0000").ok, false);
+  const v = vincular(r1.codigo); assert.equal(v.ok, true); assert.equal(v.selos, 2);
+  const r2 = registrarCompra(8);
+  assert.equal(r2.criado, false); assert.equal(r2.selos, 10); assert.equal(r2.completo, true);
+  const r3 = registrarCompra(1); // usa a marmita grátis
+  assert.equal(r3.resgatou, true); assert.equal(r3.selos, 1);
+  delete globalThis.localStorage; _reiniciarParaTeste();
+});
+await t("nota do sistema vai para a IA fora da fala do cliente", async () => {
+  let visto = null;
+  const falso = async (sys, hist) => { visto = hist.at(-1).content; return { texto: "Ok!", chamadas: [], mensagem: { role: "assistant", content: "Ok!" } }; };
+  const ag = new Agente({ pedido: new Pedido(1), dia: 1, dataTexto: "x", chamar: falso });
+  await ag.responder("meu cartão é CF-1234", "cartão fidelidade CF-1234 encontrado");
+  assert.match(visto, /<\/mensagem_cliente>\n\[Nota do sistema da loja: cartão fidelidade CF-1234 encontrado\]$/);
 });
 
 console.log(`\n${ok} testes passaram.`);

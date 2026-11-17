@@ -77,7 +77,8 @@ Como atender:
 - Entenda o pedido em texto livre e use os ids do cardápio. Uma chamada de adicionar_item por combinação de personalização. Se o cliente pedir várias coisas, chame todas as ferramentas na MESMA resposta, em paralelo.
 - Personalização fora das opções do item: explique e ofereça as que existem. Item de outro dia: diga quando tem e sugira algo de hoje.
 - Valores só das ferramentas. Com entrega definida, informe subtotal, taxa e total.
-- Para fechar: entrega (bairro) ou retirada, nome, endereço se entrega e pagamento (${PAGAMENTOS.join(", ")}). Depois de fechar_pedido, peça para clicar no botão verde Confirmar pedido, logo acima da caixa de mensagem.
+- Para fechar: entrega (bairro) ou retirada, nome, endereço se entrega e pagamento (${PAGAMENTOS.join(", ")}). Antes de chamar fechar_pedido, pergunte uma vez se o cliente já tem o Cartão Fidelidade e, se tiver, peça o código (formato CF-1234). Depois de fechar_pedido, peça para clicar no botão verde Confirmar pedido, logo acima da caixa de mensagem.
+- Cartão fidelidade: quem cria, confere e carimba é o sistema da loja (1 selo por marmita confirmada; 10 selos = 1 marmita grátis, resgatada na entrega). Siga as notas do sistema da loja que vêm depois de </mensagem_cliente>. Nunca invente código nem diga quantos selos alguém tem sem uma nota do sistema; o cartão não muda os valores do pedido.
 - Erro de ferramenta: explique com suas palavras e ofereça alternativa.
 - Português do Brasil, simpática e direta, até 6 linhas, listas com hífen, sem tabelas.
 
@@ -198,7 +199,8 @@ export class Agente {
     }
   }
 
-  async responder(textoCliente) {
+  // nota: texto gerado pelo próprio site (nunca pelo cliente), ex.: resultado da consulta do cartão fidelidade
+  async responder(textoCliente, nota = "") {
     const agora = Date.now();
     if (agora < this.bloqueadoAte) {
       const s = Math.ceil((this.bloqueadoAte - agora) / 1000);
@@ -222,7 +224,8 @@ export class Agente {
     const tamanhoAntes = this.historico.length;
     const comandaAntes = JSON.stringify(this.pedido.resumo());
     // Camada 2: delimitadores (o texto do cliente nunca é misturado com instruções)
-    this.historico.push({ role: "user", content: `<mensagem_cliente>\n${ent.texto}\n</mensagem_cliente>` });
+    const extra = nota ? `\n[Nota do sistema da loja: ${nota}]` : "";
+    this.historico.push({ role: "user", content: `<mensagem_cliente>\n${ent.texto}\n</mensagem_cliente>${extra}` });
 
     this._aparar();
     let final = null;

@@ -55,7 +55,8 @@ config.js      endereço do Worker (a chave NÃO fica no site)
 llm.js         chamada à IA pelo Worker, com nova tentativa automática no limite por minuto
 agente.js      prompt de sistema, ferramentas (function calling) e laço do agente
 app.js         liga a conversa e a comanda ao agente
-vitrine.js     site: cardápio com fotos, abas por dia, especial do dia, cartão fidelidade, abrir/fechar o chat
+vitrine.js     site: cardápio com fotos, abas por dia, especial do dia, desenho do cartão fidelidade, abrir/fechar o chat
+fidelidade.js  cartão fidelidade: cria o código, confere, carimba selos e resgate
 fotos.js       código das fotos de cada prato (Unsplash)
 logo.svg       logo da Panela de Ferro
 bia.svg        avatar da Bia (ilustração própria)
@@ -100,7 +101,13 @@ Em **Settings → Pages**, escolha **Deploy from a branch**, branch `main`, past
 
 ## Cartão fidelidade
 
-Cada marmita confirmada carimba 1 selo; com 10 selos a próxima é por conta da casa. O cartão começa vazio a cada visita e só ganha selo depois que o cliente clica em Confirmar pedido (como o site não tem servidor nem cadastro, os selos não ficam guardados entre visitas). O cartão é só visual: o agente continua sem poder dar desconto, então o resgate seria feito na entrega.
+1. **Primeira compra:** quando o cliente clica em Confirmar pedido, o site cria o cartão e a Bia mostra o código (ex.: `CF-4821`). Cada marmita confirmada vale 1 selo.
+2. **Próximos pedidos:** antes de fechar o pedido a Bia pergunta se o cliente já tem o cartão. Se ele mandar o código, o site confere e vincula o cartão; os selos novos entram quando ele confirmar. Código errado não é aceito.
+3. **10 selos:** o cartão fica completo e a próxima marmita sai por conta da casa (resgate na entrega); depois disso a contagem recomeça.
+
+Quem cria, confere e carimba o cartão é o código (`fidelidade.js`), não a IA: o site manda para a Bia só uma "nota do sistema da loja" (fora da fala do cliente) dizendo se o código existe. O cartão não mexe nos valores da comanda. O formato `CF-` é diferente do canário secreto do prompt (`PF-`).
+
+Limitação: sem servidor, os cartões ficam guardados no navegador onde foram criados (`localStorage`). Para valer em qualquer aparelho, bastaria guardar o mapa código → selos num banco (por exemplo, Cloudflare KV no mesmo Worker).
 
 ## Observações
 

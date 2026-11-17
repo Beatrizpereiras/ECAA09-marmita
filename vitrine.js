@@ -2,6 +2,7 @@
 // Só monta a tela; quem vende continua sendo o agente (app.js + agente.js).
 import { ITENS, DIAS, RESTAURANTE, brl, itensDoDia } from "./cardapio.js";
 import { foto } from "./fotos.js";
+import { META, cartaoAtual } from "./fidelidade.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
@@ -112,42 +113,35 @@ function renderDestaque() {
   if (fotoTopo) { const h = $("heroFoto"); h.src = fotoTopo; h.alt = especial.nome; }
 }
 
-// ---------- cartão fidelidade (começa vazio a cada visita; carimba só depois de confirmar) ----------
-const META = 10;
-let selos = 0;
+// ---------- cartão fidelidade (dados em fidelidade.js; aqui só desenha) ----------
 // Apaga selos que versões antigas do site deixaram salvos no navegador
 try { localStorage.removeItem("pf_selos"); } catch { /* sem armazenamento: nada a apagar */ }
-function lerSelos() { return selos; }
-function salvarSelos(n) { selos = n; }
+let selosNaTela = 0;
 
-function renderSelos(animarAte = -1) {
-  const n = lerSelos();
-  const ciclo = n % META;
-  const premio = n > 0 && ciclo === 0;
+function renderSelos(cartao) {
+  const n = cartao ? cartao.selos : 0;
+  const cheios = Math.min(n, META);
+  const animarDe = cartao && n > selosNaTela ? Math.min(selosNaTela, META) : META;
+  selosNaTela = n;
   const g = $("selos"); g.replaceChildren();
   for (let i = 0; i < META; i++) {
     const s = el("li", "selo-fid");
-    const cheio = premio || i < ciclo;
+    const cheio = i < cheios;
     if (cheio) s.classList.add("selo-fid--cheio");
     if (i === META - 1) s.classList.add("selo-fid--premio");
-    if (cheio && i >= animarAte && animarAte >= 0) s.classList.add("selo-fid--novo");
+    if (cheio && i >= animarDe) s.classList.add("selo-fid--novo");
     s.setAttribute("aria-label", cheio ? `Selo ${i + 1} carimbado` : `Selo ${i + 1} vazio`);
     g.append(s);
   }
-  $("selosTexto").textContent = premio
-    ? "Cartão completo! Sua próxima marmita é por nossa conta. Mostre este cartão na entrega."
-    : n === 0
-      ? `Cada marmita confirmada vale 1 selo. Com ${META} selos, a próxima é por nossa conta.`
-      : `Você tem ${ciclo} de ${META} selos. Faltam ${META - ciclo} para a marmita grátis.`;
+  $("cartaoCodigo").textContent = cartao ? cartao.codigo : "sem cartão ainda";
+  $("selosTexto").textContent = !cartao
+    ? "Seu cartão é criado na primeira compra e você recebe um código. Já tem? Passe o código para a Bia no próximo pedido."
+    : n >= META
+      ? `Cartão completo! No próximo pedido, passe o código ${cartao.codigo} para a Bia: uma marmita sai por nossa conta.`
+      : `Você tem ${n} de ${META} selos. Faltam ${META - n} para a marmita grátis.`;
 }
 
-window.addEventListener("pf:pedido-confirmado", (e) => {
-  const antes = lerSelos() % META;
-  const ganhou = Math.max(0, Number(e.detail?.marmitas) || 0);
-  if (!ganhou) return;
-  salvarSelos(lerSelos() + ganhou);
-  renderSelos(antes);
-});
+window.addEventListener("pf:cartao", (e) => renderSelos(e.detail));
 
 // ---------- abrir e fechar o chat (celular e tablet) ----------
 function abrirChat(abrir) {
@@ -171,4 +165,4 @@ renderAbas();
 renderCardapio(HOJE);
 renderExtras();
 renderDestaque();
-renderSelos();
+renderSelos(cartaoAtual());
