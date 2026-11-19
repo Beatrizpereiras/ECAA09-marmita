@@ -1,8 +1,7 @@
-// Interface: liga a conversa e a comanda ao agente.
+// Interface: liga a conversa e a comanda à Bia (motor de regras local, sem LLM).
 import { RESTAURANTE, DIAS, ITENS, brl, itensDoDia } from "./cardapio.js";
 import { Pedido, descreverPersonalizacoes } from "./carrinho.js";
-import { Agente } from "./agente.js";
-import { chaveConfigurada } from "./llm.js";
+import { Atendente } from "./bia.js";
 import { extrairCodigo, vincular, registrarCompra, mensagemCompra, cartaoAtual, META } from "./fidelidade.js";
 
 const $ = (id) => document.getElementById(id);
@@ -11,11 +10,10 @@ const ITENS_MARMITA = new Set(ITENS.filter((i) => i.categoria === "marmita").map
 // Dia da semana: hoje, ou ?dia=0..6 na URL para testar outros cardápios
 const param = new URLSearchParams(location.search).get("dia");
 const DIA = /^[0-6]$/.test(param ?? "") ? Number(param) : new Date().getDay();
-const dataTexto = new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
 
 // ---------- estado ----------
 const pedido = new Pedido(DIA);
-const agente = new Agente({ pedido, dia: DIA, dataTexto });
+const agente = new Atendente({ pedido, dia: DIA });
 
 // ---------- mensagens (sempre via textContent: nada do modelo vira HTML) ----------
 function linhaComNegrito(texto, el) {
@@ -70,7 +68,6 @@ function saudacao() {
   const marmitas = itensDoDia(DIA).filter((i) => i.categoria === "marmita");
   const lista = marmitas.map((i) => `- ${i.nome.replace("Marmita de ", "").replace("Marmita ", "")}: ${brl(i.preco)}`).join("\n");
   let t = `Oi! Eu sou a ${RESTAURANTE.atendente}, chef aqui da ${RESTAURANTE.nome}. Hoje (${DIAS[DIA]}) saem da panela:\n${lista}\n\nToque em **Quero esta** no cardápio ou me diga do seu jeito, por exemplo: "2 de frango, uma sem feijão". Eu tiro ingrediente, ajusto o tempero e o ponto da carne.`;
-  if (!chaveConfigurada()) t += "\n\n**Atenção:** a chave da IA ainda não foi colocada no arquivo config.js, então ainda não consigo responder.";
   adicionarMensagem("bot", t);
 }
 
@@ -184,24 +181,16 @@ async function enviar(texto) {
   $("entrada").value = ""; ajustarAltura();
   const dig = mostrarDigitando();
   renderComanda(); // esconde o botão de confirmar enquanto a Bia responde
-  // Código do cartão fidelidade na mensagem: o site confere e avisa a IA por uma nota do sistema
-  let nota = "";
+  // Código do cartão fidelidade na mensagem: o site confere (fidelidade.js) e a Bia só conta o resultado
   const codigo = extrairCodigo(texto);
-  if (codigo) {
-    const v = vincular(codigo);
-    nota = v.ok
-      ? `cartão fidelidade ${v.codigo} encontrado e vinculado a este pedido, com ${Math.min(v.selos, META)} de ${META} selos${v.completo ? " (cartão completo: a próxima marmita deste pedido sai grátis, com desconto dado na entrega)" : ""}. Os novos selos são carimbados quando o cliente confirmar.`
-      : cartaoAtual()
-        ? `o código ${codigo} não foi encontrado. Peça para o cliente conferir; o cartão ${cartaoAtual().codigo}, já vinculado, continua valendo.`
-        : `o código ${codigo} não foi encontrado. Peça para o cliente conferir; se não tiver o código certo, um cartão novo é criado quando ele confirmar o pedido.`;
-  }
+  const cartao = codigo ? vincular(codigo) : null;
   try {
-    const r = await agente.responder(texto, nota);
+    const r = await agente.responder(texto, { cartao });
     dig.remove();
     adicionarMensagem("bot", r.texto, { tipo: r.tipo === "conferir" ? "normal" : r.tipo, nota: r.nota });
   } catch (e) {
     dig.remove();
-    adicionarMensagem("bot", e?.message || "Algo deu errado ao falar com a IA. Tente de novo.", { tipo: "erro" });
+    adicionarMensagem("bot", e?.message || "Algo deu errado aqui. Tente de novo.", { tipo: "erro" });
   } finally {
     ocupado = false; $("enviar").disabled = false; $("entrada").focus();
     renderComanda(); // agora sim mostra o botão de confirmar, se o pedido estiver fechado

@@ -1,5 +1,5 @@
 // Vitrine do site: cardápio com fotos, abas por dia, cartão fidelidade e abrir/fechar o chat.
-// Só monta a tela; quem vende continua sendo o agente (app.js + agente.js).
+// Só monta a tela; quem vende é a Bia (app.js + bia.js).
 import { ITENS, DIAS, RESTAURANTE, brl, itensDoDia } from "./cardapio.js";
 import { foto } from "./fotos.js";
 import { META, cartaoAtual } from "./fidelidade.js";
