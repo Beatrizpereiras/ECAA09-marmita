@@ -1,6 +1,6 @@
 // Vitrine do site: cardápio com fotos, abas por dia, cartão fidelidade e abrir/fechar o chat.
 // Só monta a tela; quem vende é a Bia (app.js + bia.js).
-import { ITENS, DIAS, RESTAURANTE, brl, itensDoDia } from "./cardapio.js";
+import { ITENS, DIAS, RESTAURANTE, brl, itensDoDia, especialDoDia } from "./cardapio.js";
 import { foto } from "./fotos.js";
 import { META, cartaoAtual } from "./fidelidade.js";
 
@@ -99,10 +99,9 @@ function renderExtras() {
   }
 }
 
-// Prato em destaque no topo: o especial do dia (item que só sai em poucos dias da semana)
+// Prato em destaque no topo: o especial do dia (um prato diferente a cada dia, definido em cardapio.js)
 function renderDestaque() {
-  const marmitas = itensDoDia(HOJE).filter((i) => i.categoria === "marmita");
-  const especial = marmitas.filter((i) => i.dias.length < 7).sort((a, b) => a.dias.length - b.dias.length)[0] || marmitas[0];
+  const especial = especialDoDia(HOJE);
   if (!especial) return;
   $("destaqueNome").textContent = nomeCurto(especial);
   $("destaquePreco").textContent = brl(especial.preco);

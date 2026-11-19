@@ -11,7 +11,7 @@
 //     nome, pagamento, perguntas e intenções (cardápio, taxas, total, conversa).
 //  4. Ação: o pedido (carrinho.js) valida e calcula tudo; a Bia só monta o texto com o resultado.
 //  5. Próximo passo: a Bia pergunta o que falta (entrega, endereço, nome, pagamento, cartão).
-import { RESTAURANTE, DIAS, BAIRROS, ITENS, brl, itensDoDia, normalizar, buscarItem } from "./cardapio.js";
+import { RESTAURANTE, DIAS, BAIRROS, ITENS, brl, itensDoDia, normalizar, buscarItem, especialDoDia } from "./cardapio.js";
 import { PAGAMENTOS } from "./carrinho.js";
 import { verificarEntrada, LimitadorTaxa } from "./guardrails.js";
 import { META, cartaoAtual } from "./fidelidade.js";
@@ -408,8 +408,7 @@ export class Atendente {
     this.ultimaPergunta = s;
     const { entradas } = lerItens(s);
     if (!entradas.length && /\bespecial\b/.test(s)) {
-      const hoje = itensDoDia(this.dia).filter((i) => i.categoria === "marmita");
-      const esp = hoje.filter((i) => i.dias.length < 7).sort((a, b) => a.dias.length - b.dias.length)[0] || hoje[0];
+      const esp = especialDoDia(this.dia);
       if (esp) entradas.push({ ids: [esp.id], qtd: lerQuantidade(s.slice(0, s.indexOf("especial"))) ?? 1, qtdDita: false, pers: {}, subs: [], apelido: "especial" });
     }
 

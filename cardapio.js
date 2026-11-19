@@ -134,6 +134,13 @@ export function itensDoDia(dia) {
   return ITENS.filter((i) => i.dias.includes(dia));
 }
 
+// Especial do dia: um prato diferente a cada dia da semana (todos saem no dia em que são especiais)
+export const ESPECIAL_DO_DIA = ["frango-assado", "lasanha-bolonhesa", "strogonoff-frango", "feijoada", "carne-de-panela", "tilapia-grelhada", "bife-parmegiana"];
+export function especialDoDia(dia) {
+  const item = buscarItem(ESPECIAL_DO_DIA[dia]);
+  return item && item.dias.includes(dia) ? item : itensDoDia(dia).find((i) => i.categoria === "marmita") || null;
+}
+
 // Formato compacto que o agente recebe ao consultar o cardápio
 export function itemParaAgente(item) {
   const pers = {};
